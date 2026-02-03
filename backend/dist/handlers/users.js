@@ -19,29 +19,27 @@ const index = async (_req, res) => {
     }
 };
 const create = async (req, res) => {
-    const user = {
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        password_hash: req.body.password_hash,
-        role: req.body.role
-    };
-    //test:
-    console.log(user.first_name);
-    res.send("user created succesfully");
     try {
-        // HASHING PASSWORD
-        // 1. We add a "pepper" (BCRYPT_PASSWORD) to the user's password for extra security
-        // 2. We hash it with salt rounds
+        const user = {
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            password_hash: req.body.password_hash,
+            role: req.body.role
+        };
         const hash = bcrypt.hashSync(user.password_hash + BCRYPT_PASSWORD, parseInt(SALT_ROUNDS));
         user.password_hash = hash;
         const newUser = await store.create(user);
         // CREATE JWT TOKEN
         const token = jwt.sign({ user: newUser }, TOKEN_SECRET);
-        res.json(token);
+        return res.status(201).json({
+            message: "user created successfully",
+            token
+        });
     }
     catch (err) {
-        res.status(400);
-        res.json(err);
+        return res.status(400).json({
+            message: `user not created ,Error: ${err}`
+        });
     }
 };
 const user_routes = (app) => {

@@ -14,7 +14,6 @@ const { BCRYPT_PASSWORD, SALT_ROUNDS, TOKEN_SECRET } = process.env;
 const index = async (_req:Request,res:Response)=>{
     try{
         const users= await store.index();
-
         if (users.length === 0) {
             return res.json({ message: "No users found" });
         }
@@ -27,37 +26,38 @@ const index = async (_req:Request,res:Response)=>{
         res.json(err);
     }
 };
-    const create = async (req: Request, res: Response)=>{
-
-    const user:User={
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        password_hash: req.body.password_hash,
-        role: req.body.role
-    }
-                //test:
-        console.log(user.first_name);
-    res.send("user created succesfully");
 
 
+const create = async (req: Request, res: Response)=>{
     try{
-    // HASHING PASSWORD
-    // 1. We add a "pepper" (BCRYPT_PASSWORD) to the user's password for extra security
-    // 2. We hash it with salt rounds
-    const hash =bcrypt.hashSync(
-        user.password_hash + BCRYPT_PASSWORD,
-        parseInt(SALT_ROUNDS as string)
-    );
-    user.password_hash=hash;
+        const user:User={
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            password_hash: req.body.password_hash,
+            role: req.body.role
+        }
 
-    const newUser=await store.create(user);
-    // CREATE JWT TOKEN
-    const token = jwt.sign({ user: newUser }, TOKEN_SECRET as string);
-    res.json(token);
+        const hash =bcrypt.hashSync(
+            user.password_hash + BCRYPT_PASSWORD,
+            parseInt(SALT_ROUNDS as string)
+        );
 
-    }catch(err){
-        res.status(400);
-        res.json(err);
+        user.password_hash=hash;
+        const newUser=await store.create(user);
+
+        // CREATE JWT TOKEN
+        const token = jwt.sign({ user: newUser }, TOKEN_SECRET as string);
+        
+        return res.status(201).json({
+            message: "user created successfully",
+            token
+        });
+    }
+    catch(err){
+        return res.status(400).json({
+            message:`user not created ,Error: ${err}`
+        });
+
     }
 
 };
